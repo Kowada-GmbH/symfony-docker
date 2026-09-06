@@ -66,12 +66,12 @@ services:
     healthcheck:
       test:
         [
-          "CMD",
-          "pg_isready",
-          "-d",
-          "${POSTGRES_DB:-app}",
-          "-U",
-          "${POSTGRES_USER:-app}",
+          'CMD',
+          'pg_isready',
+          '-d',
+          '${POSTGRES_DB:-app}',
+          '-U',
+          '${POSTGRES_USER:-app}',
         ]
       timeout: 5s
       retries: 5
@@ -89,7 +89,7 @@ services:
     environment:
       <<: *app-environment
     healthcheck:
-      test: ["CMD", "php", "bin/console", "messenger:stats"]
+      test: ['CMD', 'php', 'bin/console', 'messenger:stats']
       interval: 30s
       timeout: 10s
       retries: 3

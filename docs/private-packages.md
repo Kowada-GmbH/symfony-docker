@@ -21,7 +21,7 @@ before - this is opt-in and adds nothing for projects that don't need it.
 ## CI and production builds
 
 `frankenphp_test` and `frankenphp_prod_builder` (the Dockerfile stages that
-`composer install` at *build* time, not container start) read the same
+`composer install` at _build_ time, not container start) read the same
 `COMPOSER_AUTH` value through a BuildKit build secret (`composer_auth`,
 declared in `compose.yaml`, sourced from the `COMPOSER_AUTH` environment
 variable at build time) rather than a build `ARG`, so it never lands in an

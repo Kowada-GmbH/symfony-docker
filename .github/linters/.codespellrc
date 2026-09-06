@@ -1,0 +1,6 @@
+[codespell]
+# "invokable" (e.g. an invokable controller, PHP's __invoke) is correct
+# Symfony/PHP terminology, not a typo of "invocable" - codespell's default
+# dictionary disagrees. Flagged inside Symfony's own auto-generated
+# config/reference.php, which isn't ours to reword anyway.
+ignore-words-list = invokable
