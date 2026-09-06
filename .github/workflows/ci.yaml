@@ -16,8 +16,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # This template stays an unbootstrapped skeleton on its own default branch
+  # (composer.json is "{}") - the frankenphp_test stage needs a real Symfony
+  # project (bin/console, real composer scripts) to build at all, so skip the
+  # Tests job until a project has actually been created from the template.
+  check:
+    name: Check for a bootstrapped project
+    runs-on: ubuntu-latest
+    outputs:
+      bootstrapped: ${{ steps.check.outputs.bootstrapped }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check
+        id: check
+        run: |
+          if [ "$(cat composer.json)" = '{}' ]; then
+            echo "Still the bare symfony-docker template - nothing to build or test yet."
+            echo "bootstrapped=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "bootstrapped=true" >> "$GITHUB_OUTPUT"
+          fi
+
   tests:
     name: Tests
+    needs: check
+    if: needs.check.outputs.bootstrapped == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

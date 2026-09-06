@@ -83,7 +83,9 @@ COPY --link --exclude=frankenphp/ . ./
 RUN <<-EOF
 	mkdir -p var/cache var/log
 	composer dump-autoload
-	composer run-script post-install-cmd
+	if composer run-script --list | grep -q post-install-cmd; then
+		composer run-script post-install-cmd
+	fi
 	chmod +x bin/console
 	sync
 EOF
@@ -108,7 +110,9 @@ RUN <<-EOF
 	mkdir -p var/cache var/log var/share
 	composer dump-autoload --classmap-authoritative --no-dev
 	composer dump-env prod
-	composer run-script --no-dev post-install-cmd
+	if composer run-script --list | grep -q post-install-cmd; then
+		composer run-script --no-dev post-install-cmd
+	fi
 	if [ -f importmap.php ]; then
 		php bin/console asset-map:compile
 	fi
