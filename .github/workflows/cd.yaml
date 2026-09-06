@@ -1,0 +1,63 @@
+---
+name: CD
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: read
+
+env:
+  CONTAINER_REGISTRY: ghcr.io
+  REPO_AUTHOR: Kowada-GmbH
+  REPO_NAME: symfony-docker
+  IMAGE_AUTHOR: kowada-gmbh
+  IMAGE_NAME: symfony-docker
+  BRANCH: main
+
+jobs:
+  deploy:
+    name: Docker Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout from Repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH }}
+          persist-credentials: false
+
+      - name: Extract Version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> "$GITHUB_ENV"
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Image
+        run: |
+          docker compose -f compose.yaml -f compose.prod.yaml build
+          docker tag app-php-prod ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_AUTHOR }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          docker tag app-php-prod ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_AUTHOR }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_AUTHOR }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_AUTHOR }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          body: |
+            ## Docker Image
+            Docker image for this release: `${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_AUTHOR }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}`
+
+            All versions of the image can be viewed [here](https://github.com/${{ env.REPO_AUTHOR }}/${{ env.REPO_NAME }}/pkgs/container/${{ env.IMAGE_NAME }}).
+          draft: false
+          prerelease: false

@@ -1,7 +1,7 @@
 #!/bin/sh
-set -e
+set -eu
 
-if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
+if [ "${1:-}" = 'frankenphp' ] || [ "${1:-}" = 'php' ] || [ "${1:-}" = 'bin/console' ]; then
 	###> dunglas/symfony-docker ###
 	# Install the project the first time PHP is started
 	# This block will remove itself after the installation
@@ -21,7 +21,7 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		sed -i '/^\t###> dunglas\/symfony-docker ###/,/^\t###< dunglas\/symfony-docker ###/d' frankenphp/docker-entrypoint.sh
 		sed -i '/###> dunglas\/symfony-docker ###/,/###< dunglas\/symfony-docker ###/d' compose.yaml
 
-		if grep -q ^DATABASE_URL= .env; then
+		if [ -n "${DATABASE_URL:-}" ]; then
 			echo 'To finish the installation please press Ctrl+C to stop Docker Compose and run: docker compose up --build --wait'
 			sleep infinity
 		fi
@@ -36,7 +36,10 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	# Or about an error in project initialization
 	php bin/console -V
 
-	if grep -q ^DATABASE_URL= .env; then
+	# Only the web process waits for the database and runs migrations, so a
+	# messenger worker started from the same image doesn't race it; compose
+	# already keeps the worker from starting before the web container is healthy.
+	if [ "${1:-}" = 'frankenphp' ] && [ -n "${DATABASE_URL:-}" ]; then
 		echo 'Waiting for database to be ready...'
 		ATTEMPTS_LEFT_TO_REACH_DATABASE=60
 		until [ $ATTEMPTS_LEFT_TO_REACH_DATABASE -eq 0 ] || DATABASE_ERROR=$(php bin/console dbal:run-sql -q "SELECT 1" 2>&1); do
@@ -61,6 +64,13 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		if find ./migrations -iname '*.php' -print -quit | grep --quiet .; then
 			php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
 		fi
+	fi
+
+	# Align var/ permissions between the container's www-data and the host user
+	# bind-mounting the project, so both can write to cache/log files in dev.
+	if [ "${APP_ENV:-prod}" = 'dev' ]; then
+		setfacl -R -m u:www-data:rwX -m "u:$(whoami):rwX" var
+		setfacl -dR -m u:www-data:rwX -m "u:$(whoami):rwX" var
 	fi
 
 	echo 'PHP app ready!'

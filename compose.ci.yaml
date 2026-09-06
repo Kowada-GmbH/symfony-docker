@@ -1,0 +1,13 @@
+---
+# CI environment override: bakes dependencies and source into the image at
+# build time (see the frankenphp_test stage) instead of relying on a bind mount,
+# so the containers are ready before the healthcheck's start_period runs out.
+services:
+  php:
+    image: ${IMAGES_PREFIX:-}app-php-test
+    build:
+      context: .
+      target: frankenphp_test
+
+  messenger:
+    image: ${IMAGES_PREFIX:-}app-php-test

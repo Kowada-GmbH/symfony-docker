@@ -28,3 +28,17 @@ services:
     tty: true
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
+
+  database:
+    ports:
+      - target: 5432
+        published: ${POSTGRES_PORT:-5432}
+        protocol: tcp
+
+  messenger:
+    image: ${IMAGES_PREFIX:-}app-php-dev
+    volumes:
+      - ./:/app
+      - /app/vendor
+    # More verbose than prod, and recycles often enough to pick up code changes.
+    command: php bin/console messenger:consume async scheduler_default -vv --time-limit=3600 --memory-limit=256M

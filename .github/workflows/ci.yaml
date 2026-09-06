@@ -24,6 +24,34 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+
+      # This template is reused across projects at different stages, so CI
+      # detects what's actually installed instead of assuming Doctrine/PHPUnit/PHPStan.
+      - name: Check for Doctrine
+        id: check_doctrine
+        run: |
+          if [ -f "config/packages/doctrine.yaml" ] || grep -q '"doctrine/orm"' composer.json 2>/dev/null; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check for PHPUnit
+        id: check_phpunit
+        run: |
+          if [ -d "tests" ] && find tests/ -name "*Test.php" -type f | grep -q .; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check for PHPStan
+        id: check_phpstan
+        run: |
+          if [ -f "phpstan.dist.neon" ] || [ -f "phpstan.neon" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Build Docker images
@@ -34,7 +62,7 @@ jobs:
           source: .
           files: |
             compose.yaml
-            compose.override.yaml
+            compose.ci.yaml
           set: |
             *.cache-from=type=gha,scope=${{github.ref}}
             *.cache-from=type=gha,scope=refs/heads/main
@@ -48,18 +76,29 @@ jobs:
       #   run: curl -v --insecure --fail-with-body https://localhost
       - name: Check Mercure reachability
         run: curl -vI --insecure --fail-with-body https://localhost/.well-known/mercure?topic=test
-      # Uncomment if Doctrine ORM is installed
-      # - name: Create test database
-      #   run: docker compose exec -T php bin/console -e test doctrine:database:create
-      # Uncomment if Doctrine Migrations is installed
-      # - name: Run migrations
-      #   run: docker compose exec -T php bin/console -e test doctrine:migrations:migrate --no-interaction
-      # Uncomment if PHPUnit is installed
-      # - name: Run PHPUnit
-      #   run: docker compose exec -T php bin/phpunit
-      # Uncomment if Doctrine ORM is installed
-      # - name: Doctrine Schema Validator
-      #   run: docker compose exec -T php bin/console -e test doctrine:schema:validate
+
+      - name: Create test database
+        if: steps.check_doctrine.outputs.enabled == 'true'
+        run: docker compose exec -T php bin/console -e test doctrine:database:create
+      - name: Create diff migration
+        if: steps.check_doctrine.outputs.enabled == 'true'
+        run: |
+          if ! find migrations/ -iname "Version*.php" -print -quit | grep -q .; then
+            echo "No migrations detected - generating an initial one."
+            docker compose exec -T php bin/console -e test doctrine:migrations:diff --no-interaction
+          fi
+      - name: Run migrations
+        if: steps.check_doctrine.outputs.enabled == 'true'
+        run: docker compose exec -T php bin/console -e test doctrine:migrations:migrate --no-interaction
+      - name: Doctrine Schema Validator
+        if: steps.check_doctrine.outputs.enabled == 'true'
+        run: docker compose exec -T php bin/console -e test doctrine:schema:validate
+      - name: Run PHPUnit
+        if: steps.check_phpunit.outputs.enabled == 'true'
+        run: docker compose exec -T php bin/phpunit
+      - name: Run PHPStan
+        if: steps.check_phpstan.outputs.enabled == 'true'
+        run: docker compose exec -T php vendor/bin/phpstan analyse --no-progress --memory-limit=1G
   lint:
     name: Lint
     runs-on: ubuntu-latest

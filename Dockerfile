@@ -20,13 +20,16 @@ WORKDIR /app
 RUN <<-EOF
 	apt-get update
 	apt-get install -y --no-install-recommends \
+		acl \
 		file \
+		gettext \
 		git
 	install-php-extensions \
 		@composer \
 		apcu \
 		intl \
 		opcache \
+		pdo_pgsql \
 		zip
 	rm -rf /var/lib/apt/lists/*
 EOF
@@ -67,6 +70,24 @@ COPY --link frankenphp/conf.d/20-app.dev.ini $PHP_INI_DIR/app.conf.d/
 
 CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch" ]
 
+# Test FrankenPHP image (used by CI): dependencies and source are baked in at
+# build time (cached via Buildx) instead of installed at container start, so
+# the container is ready before the healthcheck's start_period runs out.
+FROM frankenphp_dev AS frankenphp_test
+
+COPY --link composer.* symfony.* ./
+RUN composer install --no-cache --prefer-dist --no-autoloader --no-scripts --no-progress
+
+COPY --link --exclude=frankenphp/ . ./
+
+RUN <<-EOF
+	mkdir -p var/cache var/log
+	composer dump-autoload
+	composer run-script post-install-cmd
+	chmod +x bin/console
+	sync
+EOF
+
 # Builder for the prod FrankenPHP image
 FROM frankenphp_base AS frankenphp_prod_builder
 
@@ -81,7 +102,7 @@ COPY --link composer.* symfony.* ./
 RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
 
 # copy sources
-COPY --link --exclude=frankenphp/ . ./
+COPY --link --exclude=frankenphp/ --exclude=tests/ . ./
 
 RUN <<-EOF
 	mkdir -p var/cache var/log var/share
