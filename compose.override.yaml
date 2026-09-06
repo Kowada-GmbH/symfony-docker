@@ -35,6 +35,11 @@ services:
         published: ${POSTGRES_PORT:-5432}
         protocol: tcp
 
+  # Consumes the "async" transport routed via MESSENGER_TRANSPORT_DSN (see compose.yaml)
+  # and the "scheduler_default" schedule (see src/Schedule.php, added by symfony/scheduler's
+  # recipe). After "composer require symfony/messenger symfony/scheduler": uncomment the
+  # "async:" transport line in config/packages/messenger.yaml, it ships commented out by
+  # default - this container fails its healthcheck until it's a real transport.
   messenger:
     image: ${IMAGES_PREFIX:-}app-php-dev
     volumes:
@@ -42,3 +47,9 @@ services:
       - /app/vendor
     # More verbose than prod, and recycles often enough to pick up code changes.
     command: php bin/console messenger:consume async scheduler_default -vv --time-limit=3600 --memory-limit=256M
+
+  # "composer require symfony/orm-pack" also injects doctrine/doctrine-bundle's own
+  # "database" port mapping here - delete its content (keep the markers) after installing,
+  # the "database" override above already exposes the port.
+  ###> doctrine/doctrine-bundle ###
+  ###< doctrine/doctrine-bundle ###

@@ -99,6 +99,13 @@ services:
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
 
+# Postgres is already defined above unconditionally (this fork always uses it), but
+# "composer require symfony/orm-pack" still injects doctrine/doctrine-bundle's own
+# "database" service here - delete its content (keep the markers) after installing,
+# it duplicates the "database" key above and breaks compose file parsing otherwise.
+###> doctrine/doctrine-bundle ###
+###< doctrine/doctrine-bundle ###
+
 volumes:
   caddy_data:
   caddy_config:
