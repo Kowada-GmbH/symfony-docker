@@ -151,3 +151,14 @@ jobs:
           VALIDATE_BIOME_FORMAT: false
           VALIDATE_BIOME_LINT: false
           VALIDATE_PYTHON_BLACK: false
+          # Any of these four make super-linter run its own "composer install"
+          # before linting - the Tests job's dedicated PHPStan step (real
+          # environment, real vendor/) already covers PHP static analysis;
+          # super-linter's slim image's own PHP is missing ext-xml, which any
+          # Symfony project's framework-bundle requires, so that composer
+          # install always fails here regardless of the project's own code.
+          VALIDATE_PHP: false
+          VALIDATE_PHP_BUILTIN: false
+          VALIDATE_PHP_PHPCS: false
+          VALIDATE_PHP_PHPSTAN: false
+          VALIDATE_PHP_PSALM: false
