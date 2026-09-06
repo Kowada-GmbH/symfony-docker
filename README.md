@@ -49,7 +49,8 @@ against a local or a remote model, with an optional network sandbox.
 9. [Using a Makefile](docs/makefile.md)
 10. [Updating the template](docs/updating.md)
 11. [Troubleshooting](docs/troubleshooting.md)
-12. [Using AI coding agents](docs/agents.md)
+12. [Using private Composer packages](docs/private-packages.md)
+13. [Using AI coding agents](docs/agents.md)
 
 ## License
 

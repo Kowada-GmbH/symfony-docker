@@ -76,7 +76,11 @@ CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch" ]
 FROM frankenphp_dev AS frankenphp_test
 
 COPY --link composer.* symfony.* ./
-RUN composer install --no-cache --prefer-dist --no-autoloader --no-scripts --no-progress
+# Only needed for private VCS packages (e.g. kowada-gmbh/starter-bundle) - the
+# "composer_auth" build secret is empty for projects that don't declare any,
+# so this stays a no-op there. See compose.yaml's top-level "secrets:" entry.
+RUN --mount=type=secret,id=composer_auth,env=COMPOSER_AUTH \
+	composer install --no-cache --prefer-dist --no-autoloader --no-scripts --no-progress
 
 COPY --link --exclude=frankenphp/ . ./
 
@@ -102,7 +106,8 @@ COPY --link frankenphp/conf.d/20-app.prod.ini $PHP_INI_DIR/app.conf.d/
 
 # prevent the reinstallation of vendors at every changes in the source code
 COPY --link composer.* symfony.* ./
-RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+RUN --mount=type=secret,id=composer_auth,env=COMPOSER_AUTH \
+	composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
 
 # copy sources
 COPY --link --exclude=frankenphp/ --exclude=tests/ . ./

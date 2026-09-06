@@ -9,6 +9,13 @@ x-app-environment: &app-environment
 services:
   php:
     restart: unless-stopped
+    build:
+      # Only reaches the Dockerfile's build stages that actually build an image
+      # from source (frankenphp_test, frankenphp_prod_builder) - harmless no-op
+      # for the plain dev image, which is pulled/built without installing vendor/
+      # at build time. See the Dockerfile's matching --mount=type=secret lines.
+      secrets:
+        - composer_auth
     environment:
       <<: *app-environment
       SERVER_NAME: ${SERVER_NAME:-localhost}, php:80
@@ -112,3 +119,10 @@ volumes:
   database_data:
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
+
+# Build-time-only, sourced from the COMPOSER_AUTH env var (composer's auth.json
+# format) - only needs a real value for a project requiring a private VCS
+# package (e.g. kowada-gmbh/starter-bundle). See docs/private-packages.md.
+secrets:
+  composer_auth:
+    environment: COMPOSER_AUTH

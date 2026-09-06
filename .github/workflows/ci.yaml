@@ -81,6 +81,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Build Docker images
+        # COMPOSER_AUTH is only needed for a project requiring a private VCS
+        # package (see docs/private-packages.md) - harmless empty otherwise.
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_GITHUB_TOKEN && format('{{"github-oauth":{{"github.com":"{0}"}}}}', secrets.COMPOSER_GITHUB_TOKEN) || '' }}
         uses: docker/bake-action@v7
         with:
           pull: true

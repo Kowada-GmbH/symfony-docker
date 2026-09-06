@@ -39,6 +39,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build image
+        # COMPOSER_AUTH is only needed for a project requiring a private VCS
+        # package (see docs/private-packages.md) - harmless empty otherwise.
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_GITHUB_TOKEN && format('{{"github-oauth":{{"github.com":"{0}"}}}}', secrets.COMPOSER_GITHUB_TOKEN) || '' }}
         run: docker compose -f compose.yaml -f compose.prod.yaml build
 
       - name: Tag and push image
