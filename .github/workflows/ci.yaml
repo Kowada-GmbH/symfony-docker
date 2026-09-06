@@ -45,6 +45,12 @@ jobs:
     needs: check
     if: needs.check.outputs.bootstrapped == 'true'
     runs-on: ubuntu-latest
+    env:
+      # Every bare "docker compose" below needs this: Compose otherwise
+      # defaults to compose.yaml + compose.override.yaml (the dev image,
+      # never built here), not the compose.ci.yaml image actually built by
+      # the Build Docker images step.
+      COMPOSE_FILE: compose.yaml:compose.ci.yaml
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
