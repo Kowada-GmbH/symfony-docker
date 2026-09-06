@@ -15,6 +15,13 @@ services:
       # If you develop on Mac or Windows you can remove the vendor/ directory
       #  from the bind-mount for better performance by enabling the next line:
       #- /app/vendor
+    # Optional, git-ignored, only needed once a private Kowada package (e.g.
+    # kowada-gmbh/starter-bundle) is required via a VCS repository: put
+    # COMPOSER_AUTH=<composer's auth.json format, compact JSON, unquoted> in it,
+    # e.g. COMPOSER_AUTH={"github-oauth":{"github.com":"<token>"}}
+    env_file:
+      - path: .env.local
+        required: false
     environment:
       FRANKENPHP_WORKER_CONFIG: watch
       FRANKENPHP_SITE_CONFIG: hot_reload
@@ -45,6 +52,12 @@ services:
     volumes:
       - ./:/app
       - /app/vendor
+    # See the "php" service above - this container's vendor/ is its own anonymous
+    # volume (not the bind-mounted one), so it needs the same COMPOSER_AUTH to
+    # install private packages independently.
+    env_file:
+      - path: .env.local
+        required: false
     # More verbose than prod, and recycles often enough to pick up code changes.
     command: php bin/console messenger:consume async scheduler_default -vv --time-limit=3600 --memory-limit=256M
 
