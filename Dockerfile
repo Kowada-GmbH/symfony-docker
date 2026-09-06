@@ -80,6 +80,7 @@ RUN composer install --no-cache --prefer-dist --no-autoloader --no-scripts --no-
 
 COPY --link --exclude=frankenphp/ . ./
 
+# hadolint ignore=DL4006
 RUN <<-EOF
 	mkdir -p var/cache var/log
 	composer dump-autoload
@@ -106,6 +107,7 @@ RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scri
 # copy sources
 COPY --link --exclude=frankenphp/ --exclude=tests/ . ./
 
+# hadolint ignore=DL4006
 RUN <<-EOF
 	mkdir -p var/cache var/log var/share
 	composer dump-autoload --classmap-authoritative --no-dev
