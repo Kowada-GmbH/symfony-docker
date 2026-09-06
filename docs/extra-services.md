@@ -10,7 +10,10 @@ The currently supported packages are:
 - `symfony/orm-pack`: install a PostgreSQL service
 - `symfony/mercure-bundle`: use the Mercure.rocks module shipped with Caddy
 - `symfony/panther`: install Chromium and its drivers
-- `symfony/mailer`: install a Mailpit service
+- `symfony/mailer`: install a Mailpit service (catches dev mail, viewable at
+  `docker compose port mailer 8025`) - the recipe adds the container but
+  leaves `MAILER_DSN=null://null` in `.env`; add
+  `MAILER_DSN=smtp://mailer:1025` to `.env.dev` to actually route mail there
 - `blackfireio/blackfire-symfony-meta`: install a Blackfire service
 
 > [!NOTE]

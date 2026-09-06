@@ -46,3 +46,15 @@ read-only Contents access to just the private package repositories a project
 actually needs, not a broad personal token. Org-level secrets are the more
 maintainable default: set once, every project derived from this template
 picks it up without repeating the setup.
+
+## Matching Symfony version
+
+This template's own `SYMFONY_VERSION` (see `compose.yaml`) defaults to empty,
+which makes the bootstrap's `composer create-project symfony/skeleton`
+install whatever Symfony release is currently newest - not necessarily what
+the private package itself targets. `kowada-gmbh/starter-bundle`, for
+example, pins `^7.4` (the LTS release) regardless of what's newest at the
+time. Set `SYMFONY_VERSION=7.4.*` (matching the package's own constraint)
+before the first `docker compose up`, or requiring the package afterwards
+forces a project-wide downgrade of every `symfony/*` package instead of a
+clean install.
