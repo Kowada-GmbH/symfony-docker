@@ -5,6 +5,11 @@ x-app-environment: &app-environment
   DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-16}&charset=${POSTGRES_CHARSET:-utf8}
   # Run "composer require symfony/messenger" to install and configure Messenger
   MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN:-doctrine://default?auto_setup=0}
+  # Needed once a private Kowada package (e.g. kowada-gmbh/starter-bundle) is
+  # required via a VCS repository: composer.json's global auth.json format,
+  # e.g. {"github-oauth":{"github.com":"<token>"}} - set it in .env.local
+  # (git-ignored). Empty by default, harmless for projects that don't need it.
+  COMPOSER_AUTH: ${COMPOSER_AUTH:-}
 
 services:
   php:
