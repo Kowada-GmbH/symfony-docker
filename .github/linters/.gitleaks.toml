@@ -7,6 +7,6 @@ useDefault = true
 [allowlist]
 description = "Symfony's own .env/.env.* files intentionally commit non-secret defaults (e.g. Flex's auto-generated APP_SECRET) - real secrets always live in the git-ignored .env.local variants instead, which never reach this scan"
 paths = [
-  '''(^|/)\.env$''',
-  '''(^|/)\.env\.(dev|test|prod)$''',
+    '''(^|/)\.env$''',
+    '''(^|/)\.env\.(dev|test|prod)$''',
 ]

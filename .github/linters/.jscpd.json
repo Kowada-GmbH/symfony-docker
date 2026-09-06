@@ -1,5 +1,3 @@
 {
-  "ignore": [
-    "**/config/reference.php"
-  ]
+    "ignore": ["**/config/reference.php"]
 }
